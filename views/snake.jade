@@ -6,6 +6,8 @@ block head
 
 block content
   .game-wrapper
+    .screen-too-small Screen too small — please use a larger device or window.
+
     .game-header
       h1.game-title Snake
       .score-display
@@ -17,6 +19,8 @@ block content
     .game-container
       canvas#game-canvas
         p.canvas-fallback Your browser does not support HTML5 Canvas. Please upgrade to a modern browser to play.
+      noscript
+        p.canvas-fallback JavaScript is required to play Snake. Please enable JavaScript in your browser.
 
     .mobile-controls
       .dpad

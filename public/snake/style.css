@@ -197,9 +197,55 @@ body {
     letter-spacing: 0.1em;
   }
 
+  .score-display {
+    font-size: 0.8rem;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .score-label {
+    font-size: 0.75rem;
+  }
+
+  #score,
+  #high-score {
+    font-size: 1rem;
+    min-width: 2em;
+  }
+
   .dpad-btn {
     width: 44px;
     height: 44px;
+    font-size: 1rem;
+  }
+
+  .game-wrapper {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .overlay-title {
+    font-size: 1.6rem;
+    letter-spacing: 0.15em;
+  }
+
+  .overlay-instructions {
+    font-size: 0.8rem;
+  }
+
+  .overlay-score {
+    font-size: 0.85rem;
+  }
+
+  .overlay-btn {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+  }
+
+  .overlay-content {
+    padding: 20px 14px;
+    gap: 10px;
   }
 }
 
@@ -318,4 +364,56 @@ body {
   border-radius: 8px;
   margin: 16px;
   text-shadow: 0 0 8px #ffaa00;
+}
+
+/* Viewport too small to play — show message, hide game content */
+@media (max-width: 279px) {
+  .screen-too-small {
+    display: block;
+  }
+
+  .game-header,
+  .game-container,
+  .mobile-controls {
+    display: none;
+  }
+}
+
+/* Large screen polish — widen the game wrapper and boost font sizes */
+@media (min-width: 1200px) {
+  .game-wrapper {
+    max-width: 700px;
+  }
+
+  .game-title {
+    font-size: 3rem;
+    letter-spacing: 0.35em;
+  }
+
+  .score-display {
+    font-size: 1.1rem;
+    gap: 20px;
+  }
+
+  #score,
+  #high-score {
+    font-size: 1.4rem;
+  }
+
+  .overlay-title {
+    font-size: 3.5rem;
+  }
+
+  .overlay-instructions {
+    font-size: 1.1rem;
+  }
+
+  .overlay-score {
+    font-size: 1.2rem;
+  }
+
+  .overlay-btn {
+    padding: 14px 40px;
+    font-size: 1.1rem;
+  }
 }

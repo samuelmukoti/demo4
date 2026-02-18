@@ -4,6 +4,7 @@
  * Phase 2, subtask 2-3: game state management (start/pause/gameover screens).
  * Phase 3, subtask 3-1: arrow key handling removed; delegated fully to controls.js.
  * Phase 5, subtask 5-1: progressive difficulty, high score, auto-pause, resize handling.
+ * Phase 5, subtask 5-2: small screen fallback, min 10x10 grid, responsive polish.
  */
 (function () {
   'use strict';
@@ -14,10 +15,13 @@
   var TICK_MIN_MS    = 60;   // fastest allowed tick interval
   var TICK_STEP_MS   = 10;   // ms reduction per difficulty level
   var TICK_LEVEL_EVERY = 5;  // food items consumed per difficulty level
+  var MIN_GRID       = 10;   // minimum grid dimension (cells) in each axis
+  var MIN_SCREEN_PX  = 280;  // viewport width (px) below which the game is suppressed
 
   // ── Module state ──────────────────────────────────────────────────────────
   var canvas, ctx;
   var cellSize, gridW, gridH;
+  var gameInitialized = false; // true once the game has been fully set up
 
   // Current tick interval — decreases as difficulty rises; reset on new game.
   var currentTickMs = TICK_MS;
@@ -50,6 +54,26 @@
     }
     ctx = canvas.getContext('2d');
 
+    // Register resize/orientation/visibility listeners early so we can react
+    // even when the page starts in a too-small state.
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    if (window.innerWidth < MIN_SCREEN_PX) {
+      // Viewport too small — CSS media query shows the fallback message.
+      return;
+    }
+
+    setupGame();
+  }
+
+  // Complete game setup; called from init() or from handleResize() when the
+  // viewport grows back above MIN_SCREEN_PX after starting too small.
+  function setupGame() {
+    if (gameInitialized) { return; }
+    gameInitialized = true;
+
     resizeCanvas();
     loadHighScore();
     resetSnake();
@@ -62,10 +86,6 @@
     }
 
     document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleOrientationChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
     animFrameId = requestAnimationFrame(renderLoop);
   }
 
@@ -82,12 +102,27 @@
     canvas.width  = size;
     canvas.height = size;
 
-    cellSize = Math.floor(size / CELLS_ACROSS);
-    gridW    = Math.floor(canvas.width  / cellSize);
-    gridH    = Math.floor(canvas.height / cellSize);
+    cellSize = Math.max(1, Math.floor(size / CELLS_ACROSS));
+    gridW    = Math.max(MIN_GRID, Math.floor(canvas.width  / cellSize));
+    gridH    = Math.max(MIN_GRID, Math.floor(canvas.height / cellSize));
   }
 
   function handleResize() {
+    if (window.innerWidth < MIN_SCREEN_PX) {
+      // Screen shrank below the minimum — pause if playing.
+      if (gameState === 'playing') {
+        pauseGame();
+      }
+      return;
+    }
+
+    // If the game was never started (viewport was too small at load time),
+    // initialise it now that there is enough room.
+    if (!gameInitialized) {
+      setupGame();
+      return;
+    }
+
     resizeCanvas();
     // Clamp snake segments to the new grid bounds so none are off-screen.
     for (var i = 0; i < snake.length; i++) {
