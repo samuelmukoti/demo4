@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(function(users) {
       realUsers.innerHTML = users.map(function(user) {
-        return '<div class="user-card"><p>' + user.name + '</p><p>' + user.email + '</p></div>';
+        return '<div class="user-card"><strong>' + user.name + '</strong><p>' + user.email + '</p></div>';
       }).join('');
 
       skeletonUsers.style.display = 'none';
@@ -22,6 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(function(err) {
       console.error(err);
-      skeletonUsers.innerHTML = '<p>Error loading users. Please try again later.</p>';
+      skeletonUsers.innerHTML = '<p>Failed to load users.</p>';
     });
 });
