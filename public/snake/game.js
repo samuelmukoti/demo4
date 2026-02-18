@@ -3,17 +3,24 @@
  * Phase 2, subtask 2-2: food spawning, wall/self collision, score, snake growth.
  * Phase 2, subtask 2-3: game state management (start/pause/gameover screens).
  * Phase 3, subtask 3-1: arrow key handling removed; delegated fully to controls.js.
+ * Phase 5, subtask 5-1: progressive difficulty, high score, auto-pause, resize handling.
  */
 (function () {
   'use strict';
 
   // ── Configuration ─────────────────────────────────────────────────────────
-  var CELLS_ACROSS = 20;   // target number of columns (also rows — square grid)
-  var TICK_MS      = 150;  // ms between game logic ticks (adjustable for speed)
+  var CELLS_ACROSS   = 20;   // target number of columns (also rows — square grid)
+  var TICK_MS        = 150;  // base ms between game logic ticks
+  var TICK_MIN_MS    = 60;   // fastest allowed tick interval
+  var TICK_STEP_MS   = 10;   // ms reduction per difficulty level
+  var TICK_LEVEL_EVERY = 5;  // food items consumed per difficulty level
 
   // ── Module state ──────────────────────────────────────────────────────────
   var canvas, ctx;
   var cellSize, gridW, gridH;
+
+  // Current tick interval — decreases as difficulty rises; reset on new game.
+  var currentTickMs = TICK_MS;
 
   // Snake: array of {x, y} cell objects; index 0 is the head.
   var snake = [];
@@ -56,6 +63,7 @@
 
     document.addEventListener('keydown', handleKeyDown);
     window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     animFrameId = requestAnimationFrame(renderLoop);
@@ -85,6 +93,18 @@
     for (var i = 0; i < snake.length; i++) {
       snake[i].x = Math.min(snake[i].x, gridW - 1);
       snake[i].y = Math.min(snake[i].y, gridH - 1);
+    }
+    // Clamp food position to new grid bounds.
+    if (food) {
+      food.x = Math.min(food.x, gridW - 1);
+      food.y = Math.min(food.y, gridH - 1);
+    }
+  }
+
+  // Pause the game on mobile orientation changes to avoid disorienting the player.
+  function handleOrientationChange() {
+    if (gameState === 'playing') {
+      pauseGame();
     }
   }
 
@@ -131,6 +151,7 @@
     nextDirection = 'right';
     lastTickTime  = 0;
     score         = 0;
+    currentTickMs = TICK_MS;
     food          = null;
     spawnFood();
   }
@@ -288,6 +309,9 @@
       // Growth: keep the tail segment (don't pop) so the snake lengthens by 1.
       score += 1;
       updateScoreDisplay();
+      // Progressive difficulty: decrease tick interval every TICK_LEVEL_EVERY food items.
+      var level = Math.floor(score / TICK_LEVEL_EVERY);
+      currentTickMs = Math.max(TICK_MIN_MS, TICK_MS - level * TICK_STEP_MS);
       triggerEvent('eat', { score: score });
       spawnFood();
     } else {
@@ -299,7 +323,7 @@
   function renderLoop(timestamp) {
     animFrameId = requestAnimationFrame(renderLoop);
 
-    if (gameState === 'playing' && timestamp - lastTickTime >= TICK_MS) {
+    if (gameState === 'playing' && timestamp - lastTickTime >= currentTickMs) {
       lastTickTime = timestamp;
       gameTick();
     }
@@ -472,9 +496,9 @@
     on:           on,
     // Exposed for external reset calls:
     resetSnake:   resetSnake,
-    // Expose tick configuration for subtask 5-1 (progressive difficulty):
-    getTickMs: function ()      { return TICK_MS; },
-    setTickMs: function (ms)    { TICK_MS = ms; },
+    // Expose tick configuration (returns/sets the live interval, not the base constant):
+    getTickMs: function ()      { return currentTickMs; },
+    setTickMs: function (ms)    { currentTickMs = ms; },
     // Expose game-state setter for external modules:
     setGameState: function (s)  { gameState = s; },
     // Expose food/score setters for external modules:
