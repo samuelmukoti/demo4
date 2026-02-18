@@ -196,6 +196,109 @@ body {
   }
 }
 
+/* ── Game State Overlays ───────────────────────────────────────────────────── */
+
+/* Semi-transparent overlay covering the canvas area */
+.game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 8, 16, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.overlay-title {
+  font-size: 3rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #00ff88;
+  text-shadow:
+    0 0 10px #00ff88,
+    0 0 20px #00ff88,
+    0 0 40px #00cc66;
+}
+
+.overlay-instructions {
+  font-size: 1rem;
+  color: #88ffcc;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px #44aa77;
+}
+
+.overlay-score {
+  font-size: 1.1rem;
+  color: #00ff88;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 8px #00ff88;
+}
+
+.overlay-btn {
+  margin-top: 8px;
+  padding: 12px 32px;
+  background: transparent;
+  border: 2px solid #00ff88;
+  border-radius: 6px;
+  color: #00ff88;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  text-shadow: 0 0 8px #00ff88;
+  box-shadow: 0 0 10px #00ff8840;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.overlay-btn:hover,
+.overlay-btn:focus {
+  background: #003322;
+  box-shadow: 0 0 18px #00ff88, inset 0 0 10px #00ff8820;
+  outline: none;
+}
+
+.overlay-btn:active {
+  background: #005533;
+  box-shadow: 0 0 24px #00ff88;
+}
+
+@media (max-width: 480px) {
+  .overlay-title {
+    font-size: 2rem;
+    letter-spacing: 0.2em;
+  }
+
+  .overlay-instructions {
+    font-size: 0.85rem;
+  }
+
+  .overlay-score {
+    font-size: 0.95rem;
+  }
+
+  .overlay-btn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+  }
+}
+
 /* Screen too small fallback */
 .screen-too-small {
   display: none;

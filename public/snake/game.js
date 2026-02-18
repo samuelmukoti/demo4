@@ -1,7 +1,7 @@
 /* Snake Game — Core Engine
  * Phase 2, subtask 2-1: canvas setup, render loop, grid system, snake, arrow keys.
  * Phase 2, subtask 2-2: food spawning, wall/self collision, score, snake growth.
- * Game-state screens (start/pause/gameover) are added in subtask 2-3.
+ * Phase 2, subtask 2-3: game state management (start/pause/gameover screens).
  */
 (function () {
   'use strict';
@@ -19,14 +19,17 @@
   var direction     = 'right';
   var nextDirection = 'right';
 
-  // Food, score and gameState are managed here so subtasks 2-2 / 2-3 can
-  // patch them in without restructuring the file.
-  var food      = null;   // {x, y} — set by subtask 2-2
-  var score     = 0;      // incremented by subtask 2-2
-  var gameState = 'playing'; // expanded to start/paused/gameover in subtask 2-3
+  // Food, score, high score and game state.
+  var food      = null;   // {x, y}
+  var score     = 0;
+  var highScore = 0;
+  var gameState = 'start'; // start | playing | paused | gameover
 
   var lastTickTime = 0;
   var animFrameId  = null;
+
+  // Overlay DOM element (created dynamically in init).
+  var overlayEl = null;
 
   // Event-handler registry (used by effects.js / controls.js hooks).
   var eventHandlers = {};
@@ -40,7 +43,10 @@
     ctx = canvas.getContext('2d');
 
     resizeCanvas();
+    loadHighScore();
     resetSnake();
+    createOverlay();
+    showStartOverlay();
 
     // Hook external modules in if they have already loaded.
     if (window.SnakeControls && typeof window.SnakeControls.init === 'function') {
@@ -49,6 +55,7 @@
 
     document.addEventListener('keydown', handleKeyDown);
     window.addEventListener('resize', handleResize);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     animFrameId = requestAnimationFrame(renderLoop);
   }
@@ -80,6 +87,36 @@
     }
   }
 
+  // ── High score (localStorage) ─────────────────────────────────────────────
+  function loadHighScore() {
+    try {
+      var saved = parseInt(localStorage.getItem('snakeHighScore'), 10);
+      if (!isNaN(saved) && saved > 0) {
+        highScore = saved;
+      }
+    } catch (e) {
+      highScore = 0;
+    }
+    updateHighScoreDisplay();
+  }
+
+  function saveHighScore() {
+    try {
+      localStorage.setItem('snakeHighScore', String(highScore));
+    } catch (e) {}
+  }
+
+  // ── Score display helpers ─────────────────────────────────────────────────
+  function updateScoreDisplay() {
+    var el = document.getElementById('score');
+    if (el) { el.textContent = score; }
+  }
+
+  function updateHighScoreDisplay() {
+    var el = document.getElementById('high-score');
+    if (el) { el.textContent = highScore; }
+  }
+
   // ── Snake reset ───────────────────────────────────────────────────────────
   function resetSnake() {
     var midX = Math.floor(gridW / 2);
@@ -95,6 +132,88 @@
     score         = 0;
     food          = null;
     spawnFood();
+  }
+
+  // ── Overlay management ────────────────────────────────────────────────────
+  function createOverlay() {
+    overlayEl = document.createElement('div');
+    overlayEl.className = 'game-overlay';
+    overlayEl.style.display = 'none';
+    // Attach interaction handlers once on the overlay element.
+    overlayEl.addEventListener('click', handleOverlayInteraction);
+    overlayEl.addEventListener('touchend', handleOverlayInteraction, { passive: false });
+    canvas.parentElement.appendChild(overlayEl);
+  }
+
+  function showStartOverlay() {
+    gameState = 'start';
+    overlayEl.innerHTML =
+      '<div class="overlay-content">' +
+        '<div class="overlay-title">SNAKE</div>' +
+        '<div class="overlay-instructions">Press Space / Tap to Start</div>' +
+      '</div>';
+    overlayEl.style.display = 'flex';
+  }
+
+  function showPauseOverlay() {
+    overlayEl.innerHTML =
+      '<div class="overlay-content">' +
+        '<div class="overlay-title">PAUSED</div>' +
+        '<div class="overlay-instructions">Press Space or Esc to Resume</div>' +
+      '</div>';
+    overlayEl.style.display = 'flex';
+  }
+
+  function showGameOverOverlay() {
+    if (score > highScore) {
+      highScore = score;
+      saveHighScore();
+      updateHighScoreDisplay();
+    }
+    overlayEl.innerHTML =
+      '<div class="overlay-content">' +
+        '<div class="overlay-title">GAME OVER</div>' +
+        '<div class="overlay-score">Score: ' + score + '</div>' +
+        '<div class="overlay-score">Best: ' + highScore + '</div>' +
+        '<button class="overlay-btn" id="play-again-btn">Play Again</button>' +
+      '</div>';
+    overlayEl.style.display = 'flex';
+    var btn = document.getElementById('play-again-btn');
+    if (btn) {
+      btn.addEventListener('click', restartGame);
+    }
+  }
+
+  function hideOverlay() {
+    if (overlayEl) {
+      overlayEl.style.display = 'none';
+    }
+  }
+
+  // ── Game state transitions ─────────────────────────────────────────────────
+  function startGame() {
+    hideOverlay();
+    gameState    = 'playing';
+    lastTickTime = 0;
+  }
+
+  function pauseGame() {
+    gameState = 'paused';
+    showPauseOverlay();
+  }
+
+  function resumeGame() {
+    hideOverlay();
+    gameState    = 'playing';
+    lastTickTime = 0;
+  }
+
+  function restartGame() {
+    resetSnake();
+    updateScoreDisplay();
+    hideOverlay();
+    gameState    = 'playing';
+    lastTickTime = 0;
   }
 
   // ── Food ──────────────────────────────────────────────────────────────────
@@ -125,8 +244,6 @@
   }
 
   // ── Game tick (logic) ─────────────────────────────────────────────────────
-  // Called at a fixed interval derived from TICK_MS.
-  // Subtask 2-3 will add state guards (start/pause/gameover screens).
   function gameTick() {
     // Commit the buffered direction exactly once per tick.
     direction = nextDirection;
@@ -146,6 +263,7 @@
         newHead.y < 0 || newHead.y >= gridH) {
       gameState = 'gameover';
       triggerEvent('gameover', { score: score });
+      showGameOverOverlay();
       return;
     }
 
@@ -154,6 +272,7 @@
       if (newHead.x === snake[i].x && newHead.y === snake[i].y) {
         gameState = 'gameover';
         triggerEvent('gameover', { score: score });
+        showGameOverOverlay();
         return;
       }
     }
@@ -167,6 +286,7 @@
     if (ateFood) {
       // Growth: keep the tail segment (don't pop) so the snake lengthens by 1.
       score += 1;
+      updateScoreDisplay();
       triggerEvent('eat', { score: score });
       spawnFood();
     } else {
@@ -197,7 +317,7 @@
       window.SnakeEffects.render(ctx, getState(), 'background', timestamp);
     }
 
-    // Food — rendered by drawFood(); no-op until subtask 2-2 sets food.
+    // Food
     if (food) {
       drawFood();
     }
@@ -254,25 +374,64 @@
     ctx.shadowBlur = 0;
   }
 
-  // ── Input: arrow keys (minimal — delegated to controls.js in subtask 3-1) ─
+  // ── Input: arrow keys + state control keys ────────────────────────────────
   function handleKeyDown(e) {
     switch (e.key) {
+      case ' ':
+        e.preventDefault();
+        if (gameState === 'start') {
+          startGame();
+        } else if (gameState === 'paused') {
+          resumeGame();
+        } else if (gameState === 'gameover') {
+          restartGame();
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        if (gameState === 'playing') {
+          pauseGame();
+        } else if (gameState === 'paused') {
+          resumeGame();
+        }
+        break;
       case 'ArrowUp':
         e.preventDefault();
-        setDirection('up');
+        if (gameState === 'playing') { setDirection('up'); }
         break;
       case 'ArrowDown':
         e.preventDefault();
-        setDirection('down');
+        if (gameState === 'playing') { setDirection('down'); }
         break;
       case 'ArrowLeft':
         e.preventDefault();
-        setDirection('left');
+        if (gameState === 'playing') { setDirection('left'); }
         break;
       case 'ArrowRight':
         e.preventDefault();
-        setDirection('right');
+        if (gameState === 'playing') { setDirection('right'); }
         break;
+    }
+  }
+
+  // Tapping the overlay starts or resumes the game (mobile + desktop).
+  // The game-over Play Again button has its own dedicated click handler.
+  function handleOverlayInteraction(e) {
+    if (e.type === 'touchend') {
+      e.preventDefault();
+    }
+    if (gameState === 'start') {
+      startGame();
+    } else if (gameState === 'paused') {
+      resumeGame();
+    }
+    // gameState === 'gameover': handled exclusively by the Play Again button.
+  }
+
+  // Auto-pause when the browser tab is hidden (e.g. user switches tabs).
+  function handleVisibilityChange() {
+    if (document.hidden && gameState === 'playing') {
+      pauseGame();
     }
   }
 
@@ -301,6 +460,7 @@
   // Exposed as window.SnakeGame so controls.js and effects.js can integrate.
 
   function setDirection(dir) {
+    if (gameState !== 'playing') { return; }
     var opposites = { up: 'down', down: 'up', left: 'right', right: 'left' };
     if (dir !== opposites[direction]) {
       nextDirection = dir;
@@ -324,14 +484,14 @@
     setDirection: setDirection,
     getState:     getState,
     on:           on,
-    // Exposed for subtask 2-2 / 2-3 to call when resetting game state:
+    // Exposed for external reset calls:
     resetSnake:   resetSnake,
     // Expose tick configuration for subtask 5-1 (progressive difficulty):
     getTickMs: function ()      { return TICK_MS; },
     setTickMs: function (ms)    { TICK_MS = ms; },
-    // Expose game-state setter for subtask 2-3:
+    // Expose game-state setter for external modules:
     setGameState: function (s)  { gameState = s; },
-    // Expose food/score setters for subtask 2-2:
+    // Expose food/score setters for external modules:
     setFood:      function (f)  { food = f; },
     setScore:     function (n)  { score = n; },
     triggerEvent: triggerEvent
