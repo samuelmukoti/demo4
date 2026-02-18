@@ -1,0 +1,419 @@
+/* Snake Game - Neon Theme */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #e0e0e0;
+  font-family: "Courier New", Courier, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.game-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 16px;
+  gap: 12px;
+}
+
+/* Header */
+.game-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.game-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #00ff88;
+  text-shadow:
+    0 0 10px #00ff88,
+    0 0 20px #00ff88,
+    0 0 40px #00cc66;
+}
+
+.score-display {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 1rem;
+  color: #88ffcc;
+}
+
+.score-label {
+  color: #44aa77;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#score,
+#high-score {
+  color: #00ff88;
+  font-size: 1.2rem;
+  font-weight: bold;
+  min-width: 2.5em;
+  text-align: right;
+  text-shadow: 0 0 8px #00ff88;
+}
+
+/* Game Canvas Container */
+.game-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game-canvas {
+  display: block;
+  border: 2px solid #00ff88;
+  box-shadow:
+    0 0 10px #00ff88,
+    0 0 20px #00ff8840,
+    inset 0 0 20px #00ff8808;
+  background-color: #080810;
+  max-width: 100%;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.canvas-fallback {
+  color: #ff4466;
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed #ff4466;
+  background: #1a0010;
+}
+
+/* Mobile D-Pad Controls */
+.mobile-controls {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dpad-btn {
+  width: 56px;
+  height: 56px;
+  background: #0d1a12;
+  border: 2px solid #00ff88;
+  border-radius: 8px;
+  color: #00ff88;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: background 0.1s, box-shadow 0.1s;
+  text-shadow: 0 0 6px #00ff88;
+  box-shadow: 0 0 8px #00ff8840;
+}
+
+.dpad-btn:active,
+.dpad-btn:focus {
+  background: #003322;
+  box-shadow: 0 0 14px #00ff88, inset 0 0 8px #00ff8840;
+  outline: none;
+}
+
+/* Show D-pad on touch devices or small viewports */
+@media (max-width: 768px) {
+  .mobile-controls {
+    display: flex;
+  }
+}
+
+/* Also show D-pad on touch-capable devices regardless of viewport width */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-controls {
+    display: flex;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .game-title {
+    font-size: 1.8rem;
+    letter-spacing: 0.2em;
+  }
+
+  .score-display {
+    font-size: 0.9rem;
+    gap: 10px;
+  }
+
+  .dpad-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+
+  .game-wrapper {
+    padding: 10px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .game-title {
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+  }
+
+  .score-display {
+    font-size: 0.8rem;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .score-label {
+    font-size: 0.75rem;
+  }
+
+  #score,
+  #high-score {
+    font-size: 1rem;
+    min-width: 2em;
+  }
+
+  .dpad-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
+
+  .game-wrapper {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .overlay-title {
+    font-size: 1.6rem;
+    letter-spacing: 0.15em;
+  }
+
+  .overlay-instructions {
+    font-size: 0.8rem;
+  }
+
+  .overlay-score {
+    font-size: 0.85rem;
+  }
+
+  .overlay-btn {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+  }
+
+  .overlay-content {
+    padding: 20px 14px;
+    gap: 10px;
+  }
+}
+
+/* ── Game State Overlays ───────────────────────────────────────────────────── */
+
+/* Semi-transparent overlay covering the canvas area */
+.game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 8, 16, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.overlay-title {
+  font-size: 3rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #00ff88;
+  text-shadow:
+    0 0 10px #00ff88,
+    0 0 20px #00ff88,
+    0 0 40px #00cc66;
+}
+
+.overlay-instructions {
+  font-size: 1rem;
+  color: #88ffcc;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px #44aa77;
+}
+
+.overlay-score {
+  font-size: 1.1rem;
+  color: #00ff88;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 8px #00ff88;
+}
+
+.overlay-btn {
+  margin-top: 8px;
+  padding: 12px 32px;
+  background: transparent;
+  border: 2px solid #00ff88;
+  border-radius: 6px;
+  color: #00ff88;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  text-shadow: 0 0 8px #00ff88;
+  box-shadow: 0 0 10px #00ff8840;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.overlay-btn:hover,
+.overlay-btn:focus {
+  background: #003322;
+  box-shadow: 0 0 18px #00ff88, inset 0 0 10px #00ff8820;
+  outline: none;
+}
+
+.overlay-btn:active {
+  background: #005533;
+  box-shadow: 0 0 24px #00ff88;
+}
+
+@media (max-width: 480px) {
+  .overlay-title {
+    font-size: 2rem;
+    letter-spacing: 0.2em;
+  }
+
+  .overlay-instructions {
+    font-size: 0.85rem;
+  }
+
+  .overlay-score {
+    font-size: 0.95rem;
+  }
+
+  .overlay-btn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Screen too small fallback */
+.screen-too-small {
+  display: none;
+  color: #ffaa00;
+  font-size: 1rem;
+  text-align: center;
+  padding: 20px;
+  border: 2px dashed #ffaa00;
+  background: #1a1000;
+  border-radius: 8px;
+  margin: 16px;
+  text-shadow: 0 0 8px #ffaa00;
+}
+
+/* Viewport too small to play — show message, hide game content */
+@media (max-width: 279px) {
+  .screen-too-small {
+    display: block;
+  }
+
+  .game-header,
+  .game-container,
+  .mobile-controls {
+    display: none;
+  }
+}
+
+/* Large screen polish — widen the game wrapper and boost font sizes */
+@media (min-width: 1200px) {
+  .game-wrapper {
+    max-width: 700px;
+  }
+
+  .game-title {
+    font-size: 3rem;
+    letter-spacing: 0.35em;
+  }
+
+  .score-display {
+    font-size: 1.1rem;
+    gap: 20px;
+  }
+
+  #score,
+  #high-score {
+    font-size: 1.4rem;
+  }
+
+  .overlay-title {
+    font-size: 3.5rem;
+  }
+
+  .overlay-instructions {
+    font-size: 1.1rem;
+  }
+
+  .overlay-score {
+    font-size: 1.2rem;
+  }
+
+  .overlay-btn {
+    padding: 14px 40px;
+    font-size: 1.1rem;
+  }
+}

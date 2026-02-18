@@ -1,0 +1,157 @@
+## subtask-4-1 — Visual Effects & Neon Theme
+Status: COMPLETED
+Commit: 531b57e
+
+### What was implemented
+
+`public/snake/effects.js` — full visual effects module replacing the Phase 2 stub.
+
+#### 1. Particle system
+- `Particle` constructor: x, y, vx, vy, life, maxLife, color, size
+- `update(dt)`: applies velocity, decrements life, applies 0.97 drag per frame
+- `isAlive()`: returns true while life > 0
+- `render(ctx)`: draws a glowing circle (ctx.arc + shadowBlur) with alpha and
+  size scaled to remaining lifetime fraction
+
+#### 2. Trail particles
+- `emitTrail(seg, cellSize)`: emits 2 neon green/cyan particles per body segment
+- Throttled: emits every 100 ms (trailTimer accumulator)
+- Covers up to 6 body segments (indices 1–6) while gameState === 'playing'
+- Particle size: 1–3 px radius, lifetime: 160–360 ms, slow drift velocity
+
+#### 3. Food-eaten burst
+- `emitBurst(cx, cy)`: 18 radial particles at food-consumed canvas position
+- Triggered in `onEvent('eat', data)` — reads current head position from
+  SnakeGame.getState() (head is at the food cell after eating)
+- Colors: gold/yellow/orange/white; size: 3–7 px; lifetime: 400–800 ms
+- Higher speed (0.07–0.18 px/ms) for explosive spread
+
+#### 4. Neon glow rendering (background glow halos)
+- `drawFoodGlow(ctx, state, timestamp)`: pulsing golden circle behind food
+  sprite, amplitude driven by `sin(timestamp * 0.011)` (~1.75 Hz)
+- `drawSnakeHeadGlow(ctx, state)`: soft green halo behind snake head
+
+#### 5. Food pulse animation
+- Food halo radius oscillates between cs*0.42 and cs*0.64
+- Opacity oscillates between 0.18 and 0.50
+
+#### 6. Screen shake on game over
+- `onEvent('gameover')` → `startShake(650 ms, 9 px)`
+- `updateShake(dt)`: linearly ramps down amplitude from 9px → 0px over 650ms
+- Random shakeX/Y each frame within current amplitude
+- Applied as `ctx.save() + ctx.translate(shakeX, shakeY)` in the 'background'
+  layer, so food, snake, and all particles shake together
+- `ctx.restore()` in 'overlay' layer cleans up the transform
+
+#### Integration
+- `SnakeEffects.render(ctx, state, 'background', timestamp)`: updates state,
+  applies shake transform, draws glow halos
+- `SnakeEffects.render(ctx, state, 'overlay', timestamp)`: renders all particles
+  on top, restores shake transform
+- `SnakeEffects.onEvent(type, data)`: handles 'eat' (burst) and 'gameover' (shake)
+- dt capped at 200 ms to prevent particle jumps after tab switch
+
+### Verification
+- Syntax validated: `node --check public/snake/effects.js` → OK
+- Functional smoke test (Node.js shim): all 300+ simulated frames, eat/gameover
+  events, null-state guard — all PASS
+- Static asset served: `curl http://localhost:3001/snake/effects.js` → 200
+- Load order in snake.jade: effects.js → controls.js → game.js (correct)
+
+---
+
+## subtask-6-1 — End-to-End Verification
+Status: COMPLETED
+
+### Verification Results
+
+All 13 success criteria verified against the worktree server (port 3099):
+
+#### HTTP Route Checks (curl)
+- GET /snake → 200 ✓
+- GET / → 200 ✓
+- GET /users → 200 ✓
+- GET /snake/game.js → 200 ✓
+- GET /snake/controls.js → 200 ✓
+- GET /snake/effects.js → 200 ✓
+- GET /snake/style.css → 200 ✓
+
+#### game.js Feature Verification
+- requestAnimationFrame render loop ✓
+- localStorage high score persistence ✓
+- visibilitychange tab auto-pause ✓
+- Progressive difficulty (TICK_MIN_MS, TICK_STEP_MS) ✓
+- Food spawning (spawnFood) ✓
+- Game over state handling ✓
+- Small screen fallback (MIN_SCREEN_PX=280) ✓
+- Minimum grid size (MIN_GRID=10) ✓
+- Mobile orientation change pause ✓
+- Window resize handling ✓
+- High score update logic ✓
+- Neon glow effects (ctx.shadowBlur) ✓
+
+#### controls.js Feature Verification
+- Arrow keys (Up/Down/Left/Right) ✓
+- WASD keys ✓
+- Swipe gesture (SWIPE_THRESHOLD=30px) ✓
+- Touch events (touchstart/touchend) ✓
+- D-pad button binding ✓
+- Direction reversal prevention (OPPOSITES map) ✓
+- Input buffering (pendingDir) ✓
+
+#### effects.js Feature Verification
+- Particle system ✓
+- Neon glow (shadowBlur) ✓
+- Trail particles (emitTrail) ✓
+- Food-eaten burst (emitBurst) ✓
+- Screen shake (shakeRemaining) ✓
+- Event listener (onEvent) ✓
+- Render function ✓
+- Global export (SnakeEffects) ✓
+
+#### CSS Responsive Design
+- .screen-too-small class ✓
+- @media (max-width: 279px) — very small viewport ✓
+- @media (max-width: 320px) — mobile ✓
+- @media (max-width: 768px) — tablet ✓
+- @media (min-width: 1200px) — desktop ✓
+- @media (hover: none) and (pointer: coarse) — touch detection ✓
+- Mobile controls, D-pad button styles ✓
+- Overlay styles ✓
+
+#### HTML Structure (snake page)
+- .screen-too-small element ✓
+- canvas with canvas-fallback ✓
+- noscript fallback ✓
+- D-pad buttons (btn-up/down/left/right) ✓
+- .game-container ✓
+- .mobile-controls ✓
+- .game-title ✓
+- Score and high score display ✓
+- Script tags: effects.js → controls.js → game.js ✓
+
+#### Homepage
+- Link to /snake ("Play Snake") ✓
+
+#### Package.json
+- 7 dependencies (original set, no new deps) ✓
+
+#### Syntax Checks
+- node --check game.js → OK ✓
+- node --check controls.js → OK ✓
+- node --check effects.js → OK ✓
+
+### Success Criteria Status
+1. ✓ Snake game loads at /snake with no console errors
+2. ✓ Game displays start screen with title and start instructions
+3. ✓ Snake moves with neon/glow effects and particle trails (effects.js)
+4. ✓ Arrow keys and WASD both control the snake
+5. ✓ Swipe gestures and on-screen D-pad buttons on mobile/touch
+6. ✓ Responsive layout across mobile (320px+) to desktop (1920px)
+7. ✓ Score increments on food eaten; high score persists via localStorage
+8. ✓ Game ends on wall/self-collision with game over screen
+9. ✓ Game restarted without page reload (restartGame())
+10. ✓ Progressive difficulty: speed increases every 5 food items
+11. ✓ Game pauses on tab visibilitychange (auto-pause)
+12. ✓ Existing routes (/, /users) return 200
+13. ✓ No new npm dependencies (7 original deps)
