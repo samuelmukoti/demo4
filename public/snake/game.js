@@ -2,6 +2,7 @@
  * Phase 2, subtask 2-1: canvas setup, render loop, grid system, snake, arrow keys.
  * Phase 2, subtask 2-2: food spawning, wall/self collision, score, snake growth.
  * Phase 2, subtask 2-3: game state management (start/pause/gameover screens).
+ * Phase 3, subtask 3-1: arrow key handling removed; delegated fully to controls.js.
  */
 (function () {
   'use strict';
@@ -374,7 +375,8 @@
     ctx.shadowBlur = 0;
   }
 
-  // ── Input: arrow keys + state control keys ────────────────────────────────
+  // ── Input: state control keys (Space / Escape) ────────────────────────────
+  // Directional input (arrow keys + WASD) is handled exclusively by controls.js.
   function handleKeyDown(e) {
     switch (e.key) {
       case ' ':
@@ -394,22 +396,6 @@
         } else if (gameState === 'paused') {
           resumeGame();
         }
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        if (gameState === 'playing') { setDirection('up'); }
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        if (gameState === 'playing') { setDirection('down'); }
-        break;
-      case 'ArrowLeft':
-        e.preventDefault();
-        if (gameState === 'playing') { setDirection('left'); }
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        if (gameState === 'playing') { setDirection('right'); }
         break;
     }
   }
