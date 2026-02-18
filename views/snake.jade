@@ -1,0 +1,31 @@
+extends layout
+
+block head
+  meta(name='viewport', content='width=device-width, initial-scale=1.0')
+  link(rel='stylesheet', href='/snake/style.css')
+
+block content
+  .game-wrapper
+    .game-header
+      h1.game-title Snake
+      .score-display
+        span.score-label Score:
+        span#score 0
+        span.score-label High Score:
+        span#high-score 0
+
+    .game-container
+      canvas#game-canvas
+        p.canvas-fallback Your browser does not support HTML5 Canvas. Please upgrade to a modern browser to play.
+
+    .mobile-controls
+      .dpad
+        button.dpad-btn#btn-up(aria-label='Up') ▲
+        .dpad-row
+          button.dpad-btn#btn-left(aria-label='Left') ◀
+          button.dpad-btn#btn-down(aria-label='Down') ▼
+          button.dpad-btn#btn-right(aria-label='Right') ▶
+
+  script(src='/snake/effects.js')
+  script(src='/snake/controls.js')
+  script(src='/snake/game.js')

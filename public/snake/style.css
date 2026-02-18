@@ -1,0 +1,211 @@
+/* Snake Game - Neon Theme */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #e0e0e0;
+  font-family: "Courier New", Courier, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.game-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 16px;
+  gap: 12px;
+}
+
+/* Header */
+.game-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.game-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #00ff88;
+  text-shadow:
+    0 0 10px #00ff88,
+    0 0 20px #00ff88,
+    0 0 40px #00cc66;
+}
+
+.score-display {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 1rem;
+  color: #88ffcc;
+}
+
+.score-label {
+  color: #44aa77;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#score,
+#high-score {
+  color: #00ff88;
+  font-size: 1.2rem;
+  font-weight: bold;
+  min-width: 2.5em;
+  text-align: right;
+  text-shadow: 0 0 8px #00ff88;
+}
+
+/* Game Canvas Container */
+.game-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game-canvas {
+  display: block;
+  border: 2px solid #00ff88;
+  box-shadow:
+    0 0 10px #00ff88,
+    0 0 20px #00ff8840,
+    inset 0 0 20px #00ff8808;
+  background-color: #080810;
+  max-width: 100%;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.canvas-fallback {
+  color: #ff4466;
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed #ff4466;
+  background: #1a0010;
+}
+
+/* Mobile D-Pad Controls */
+.mobile-controls {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dpad-btn {
+  width: 56px;
+  height: 56px;
+  background: #0d1a12;
+  border: 2px solid #00ff88;
+  border-radius: 8px;
+  color: #00ff88;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: background 0.1s, box-shadow 0.1s;
+  text-shadow: 0 0 6px #00ff88;
+  box-shadow: 0 0 8px #00ff8840;
+}
+
+.dpad-btn:active,
+.dpad-btn:focus {
+  background: #003322;
+  box-shadow: 0 0 14px #00ff88, inset 0 0 8px #00ff8840;
+  outline: none;
+}
+
+/* Show D-pad on touch devices or small viewports */
+@media (max-width: 768px) {
+  .mobile-controls {
+    display: flex;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .game-title {
+    font-size: 1.8rem;
+    letter-spacing: 0.2em;
+  }
+
+  .score-display {
+    font-size: 0.9rem;
+    gap: 10px;
+  }
+
+  .dpad-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+
+  .game-wrapper {
+    padding: 10px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .game-title {
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+  }
+
+  .dpad-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Screen too small fallback */
+.screen-too-small {
+  display: none;
+  color: #ffaa00;
+  font-size: 1rem;
+  text-align: center;
+  padding: 20px;
+  border: 2px dashed #ffaa00;
+  background: #1a1000;
+  border-radius: 8px;
+  margin: 16px;
+  text-shadow: 0 0 8px #ffaa00;
+}
