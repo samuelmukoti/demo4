@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  h1 Users
+  div#skeleton-users
+    - var i = 0
+    while i < 5
+      div.skeleton-card
+        div.skeleton.skeleton-avatar
+        div.skeleton.skeleton-text.wide
+        div.skeleton.skeleton-text.short
+      - i++
+  div#real-users(style='display:none')
