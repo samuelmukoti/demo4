@@ -160,6 +160,13 @@ body {
   }
 }
 
+/* Also show D-pad on touch-capable devices regardless of viewport width */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-controls {
+    display: flex;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .game-title {
