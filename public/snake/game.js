@@ -1,6 +1,7 @@
 /* Snake Game — Core Engine
  * Phase 2, subtask 2-1: canvas setup, render loop, grid system, snake, arrow keys.
- * Food, collision and game-states are added in subtasks 2-2 and 2-3.
+ * Phase 2, subtask 2-2: food spawning, wall/self collision, score, snake growth.
+ * Game-state screens (start/pause/gameover) are added in subtask 2-3.
  */
 (function () {
   'use strict';
@@ -91,12 +92,41 @@
     direction     = 'right';
     nextDirection = 'right';
     lastTickTime  = 0;
+    score         = 0;
+    food          = null;
+    spawnFood();
+  }
+
+  // ── Food ──────────────────────────────────────────────────────────────────
+
+  // Returns true if the given {x, y} position overlaps any snake segment.
+  function isOnSnake(pos) {
+    for (var i = 0; i < snake.length; i++) {
+      if (snake[i].x === pos.x && snake[i].y === pos.y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Place food at a random grid cell that is not occupied by the snake.
+  function spawnFood() {
+    var pos;
+    var attempts = 0;
+    var maxAttempts = gridW * gridH;
+    do {
+      pos = {
+        x: Math.floor(Math.random() * gridW),
+        y: Math.floor(Math.random() * gridH)
+      };
+      attempts++;
+    } while (isOnSnake(pos) && attempts < maxAttempts);
+    food = pos;
   }
 
   // ── Game tick (logic) ─────────────────────────────────────────────────────
   // Called at a fixed interval derived from TICK_MS.
-  // Subtask 2-2 will extend this function to add food consumption,
-  // wall/self collision, and score.  Subtask 2-3 will add state guards.
+  // Subtask 2-3 will add state guards (start/pause/gameover screens).
   function gameTick() {
     // Commit the buffered direction exactly once per tick.
     direction = nextDirection;
@@ -111,12 +141,37 @@
       case 'right': newHead.x += 1; break;
     }
 
-    // Wrap at boundaries for now — wall collision added in subtask 2-2.
-    newHead.x = (newHead.x + gridW) % gridW;
-    newHead.y = (newHead.y + gridH) % gridH;
+    // Wall collision — game over if head moves outside the grid.
+    if (newHead.x < 0 || newHead.x >= gridW ||
+        newHead.y < 0 || newHead.y >= gridH) {
+      gameState = 'gameover';
+      triggerEvent('gameover', { score: score });
+      return;
+    }
 
+    // Self-collision — game over if head overlaps any existing body segment.
+    for (var i = 0; i < snake.length; i++) {
+      if (newHead.x === snake[i].x && newHead.y === snake[i].y) {
+        gameState = 'gameover';
+        triggerEvent('gameover', { score: score });
+        return;
+      }
+    }
+
+    // Check whether the new head lands on food before moving the snake.
+    var ateFood = food && newHead.x === food.x && newHead.y === food.y;
+
+    // Advance snake: prepend new head.
     snake.unshift(newHead);
-    snake.pop();
+
+    if (ateFood) {
+      // Growth: keep the tail segment (don't pop) so the snake lengthens by 1.
+      score += 1;
+      triggerEvent('eat', { score: score });
+      spawnFood();
+    } else {
+      snake.pop();
+    }
   }
 
   // ── Render loop ───────────────────────────────────────────────────────────
